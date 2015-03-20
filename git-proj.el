@@ -27,7 +27,7 @@
  ))
 
 (defun git-proj-get-buffer-and-prepare-window ()
-  (let ((buffer (get-buffer-create "git-proj-result-buffer")))
+  (let ((buffer (get-buffer-create "git-proj-buffer")))
     (if (eq (get-buffer-window buffer 'visible) nil) ; If buffer is not visible
         (progn
          (split-window-sensibly (selected-window))   ; Split and show
@@ -95,10 +95,8 @@
          ((string-prefix-p "/" filename) ; If it is absolute path, just open it
           (git-proj-open-file-with-optional-line-number filename))
          (t                              ; Else, search for it
-          (if (equal (boundp 'git-proj-root) nil)
-              (git-proj-goto-file-impl default-directory filename)
-            (git-proj-goto-file-impl git-proj-root filename)
-            ))
+          (git-proj-goto-file-impl git-proj-root filename)
+          )
          )
       (message "git-proj-goto-file: empty filename")
 )))
@@ -126,11 +124,14 @@
   (interactive)
   (let ((symbol (thing-at-point 'symbol)))
     (if (not (equal symbol nil))
-        (if (equal (boundp 'git-proj-root) nil)
-            (git-proj-grep-impl default-directory symbol)
-          (git-proj-grep-impl git-proj-root symbol)
-          )
+        (git-proj-grep-impl git-proj-root symbol)
       (message "git-proj-grep-def: empty symbol")
 )))
+
+(add-hook 'after-init-hook
+          (lambda ()
+            (if (equal (boundp 'git-proj-root) nil)
+                (setq git-proj-root default-directory)
+              )))
 
 (provide 'git-proj)
