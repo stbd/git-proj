@@ -23,7 +23,11 @@
      (if (> (safe-length values) 0)
          (find-file (nth 0 values)))
      (if (> (safe-length values) 1)
-         (forward-line (- (string-to-number (nth 1 values)) 1)))
+         (progn
+           (setq line-num (string-to-number (nth 1 values)))
+           (setq current-line-num (1+ (count-lines 1 (point))))
+           (forward-line line-num)
+       ))
  ))
 
 (defun git-proj-get-buffer-and-prepare-window ()
