@@ -128,10 +128,25 @@
       (message "git-proj-grep-def: empty symbol")
 )))
 
+(defun git-proj-find-project-root ()
+  (setq root-path default-directory)
+  (if (string-prefix-p "~/" root-path)
+      (setq root-path
+            (replace-regexp-in-string "~/"
+                                      (concat
+                                       (getenv "HOME") "/")
+                                      root-path))
+    )
+  root-path
+)
+
 (add-hook 'after-init-hook
           (lambda ()
-            (if (equal (boundp 'git-proj-root) nil)
-                (setq git-proj-root default-directory)
+            (if (equal (boundp 'git-proj-root) nil)   ; If project was not specified, try to figure it out
+                (progn
+                  (setq git-proj-root (git-proj-find-project-root))
+                  (message "root was set to %s" git-proj-root)
+                  )
               )))
 
 (provide 'git-proj)
