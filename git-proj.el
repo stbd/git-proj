@@ -147,10 +147,7 @@
 (add-hook 'after-init-hook
           (lambda ()
             (if (equal (boundp 'git-proj-root) nil)   ; If project was not specified, try to figure it out
-                (progn
-                  (setq git-proj-root (git-proj-find-project-root))
-                  (message "root was set to %s" git-proj-root)
-                  )
+                (setq git-proj-root (git-proj-find-project-root))
               )))
 
 (provide 'git-proj)
