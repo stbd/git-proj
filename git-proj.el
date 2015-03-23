@@ -26,7 +26,7 @@
          (progn
            (setq line-num (string-to-number (nth 1 values)))
            (setq current-line-num (1+ (count-lines 1 (point))))
-           (forward-line line-num)
+           (forward-line (- line-num current-line-num))
        ))
  ))
 
