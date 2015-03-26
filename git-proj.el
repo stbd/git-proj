@@ -18,6 +18,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+(setq git-proj-search-prefix "git-root")
+
 (defun git-proj-open-file-with-optional-line-number (description)
   (let ((values (split-string description ":"))) ; Try to split on ":"
      (if (> (safe-length values) 0)
@@ -43,17 +45,19 @@
     buffer                                           ; return it
 ))
 
-(defun git-proj-show-search-result-with-absolute-paths
-  (description path-prefix list-of-lines-starting-with-file)
+(defun git-proj-show-search-result-with-prefix
+  (description prefix list-of-lines-starting-with-file)
   (let ((result "")
         (buffer (git-proj-get-buffer-and-prepare-window))
         )
     (dolist (var list-of-lines-starting-with-file result)
-      (setq result (concat result path-prefix var "\n"))    ; For each line, add abolute path
+      (setq result (concat result prefix var "\n"))    ; For each line, add abolute path
       )
     (princ description buffer)
     (princ "\n\n" buffer)
     (princ result buffer)
+    (goto-char (point-min)) ; Goto second line, the one jsut before first result
+    (forward-line 1)
 ))
 
 (defun git-proj-get-filename ()
@@ -80,9 +84,9 @@
          (concat search-root (replace-regexp-in-string "\n$" "" (buffer-string))))
         )
        ((> (count-lines (point-min) (point-max)) 1)
-        (git-proj-show-search-result-with-absolute-paths
+        (git-proj-show-search-result-with-prefix
          "Multiple matching files (use git-proj-goto-file to goto file): "
-         search-root
+         (concat git-proj-search-prefix "/")
          (split-string (buffer-string) "\n" t))                ; Split to lines
         )
        (t
@@ -93,11 +97,13 @@
   "Tries to open file referenced by string under cursor"
   (interactive)
   (let ((filename (git-proj-get-filename)))
-
     (if (not (equal filename nil))       ; If cursor points to something
         (cond
          ((string-prefix-p "/" filename) ; If it is absolute path, just open it
           (git-proj-open-file-with-optional-line-number filename))
+         ((string-prefix-p git-proj-search-prefix filename)
+          (git-proj-open-file-with-optional-line-number
+           (replace-regexp-in-string  git-proj-search-prefix git-proj-root filename)))
          (t                              ; Else, search for it
           (git-proj-goto-file-impl git-proj-root filename)
           )
@@ -117,9 +123,9 @@
         (message "git-proj-goto-def: symbol \"%s\" not found" symbol)
         )
        (t
-        (git-proj-show-search-result-with-absolute-paths
+        (git-proj-show-search-result-with-prefix
          "Search result (use git-proj-goto-file to goto location): "
-         search-root
+         (concat git-proj-search-prefix "/")
          (split-string (buffer-string) "\n" t)        ; Split to lines
 ))))))
 
