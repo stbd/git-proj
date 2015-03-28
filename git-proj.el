@@ -174,7 +174,7 @@
                   (throw 'git-proj-exit-loop t)
                   )
                  ((> (count-lines (point-min) (point-max)) 1) ; Multiple matches: store to buffer and continue loop
-                  (setq result-buffer (concat result-buffer (buffer-string)))
+                  (setq result-buffer (concat result-buffer (buffer-string))))
     ))))))
   )
   (if (not (equal (length result-buffer) 0))
