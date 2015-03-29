@@ -1,7 +1,7 @@
 ;; git-proj - Small extension for Emacs to help working with Git projects
 ;;
 ;; Author: Olli Huurinainen, huurinainen.olli@gmail.com
-;; Version: 0.1
+;; Version: 0.2
 ;;
 ;; Copyright (C) 2015  Olli Huurinainen
 ;;
