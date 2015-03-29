@@ -18,7 +18,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(setq git-proj-search-prefix "git-root")
+(setq git-proj-search-prefix "-")
 (setq git-proj-default-goto-other-rules
       '(("c" ("h" "hh"))
         ("h" ("c" "cc"))
@@ -145,53 +145,59 @@
 )))
 
 (defun git-proj-goto-other-impl (search-root match-rules filename)
-  (setq type
-        (car (last (split-string filename "\\."))))
+  (setq split-name (split-string filename "\\."))
+  (if (> (equal (length split-name) 1))
 
-  (setq result-buffer "")
-  (catch 'git-proj-exit-loop ; Catch for exiting loop (TODO: better way?)
+      (let (
+            (type (car (last split-name)))
+            (default-directory search-root) ; Set run directory for call-process
+            )
+        (setq result-buffer "")    ; Buffer to show multiple matches
+        (catch 'git-proj-exit-loop ; Catch for exiting loop (TODO: better way?)
 
-    (dolist (set match-rules) ; Go through each set in rules and test if key matches
-      (setq key (car set))
-      (if (string-equal key type) ; If key matches, goto through endings for others
+          (dolist (set match-rules) ; Go through each set in rules and test if key matches
+            (setq key (car set))
+            (if (string-equal key type) ; If key matches, goto through endings for others
+                (let ((other-endings (nth 1 set)))
 
-          (let ((default-directory search-root)) ; Set run directory for call-process
-            (setq other-endings (nth 1 set))
-            (dolist (ending other-endings)
-              (setq other-filename ; Create filename for other file
-                    (replace-regexp-in-string type ending filename))
+                  (dolist (ending other-endings)
+                    (setq other-filename ; Create filename for other file
+                          (replace-regexp-in-string type ending filename))
 
-              (with-temp-buffer
-                (call-process "git" nil t t "ls-files" (concat "*" other-filename))
-                (cond
-                 ((not (equal (string-prefix-p "fatal" (buffer-string)) nil))
-                  (throw 'git-proj-exit-loop  "Not repository")
-                  )
-                 ((and (equal (length result-buffer) 0)
-                        (equal (count-lines (point-min) (point-max)) 1)) ; Perfect match: open and exit loop
-                  (git-proj-open-file-with-optional-line-number
-                   (concat search-root (replace-regexp-in-string "\n$" "" (buffer-string))))
-                  (throw 'git-proj-exit-loop t)
-                  )
-                 ((> (count-lines (point-min) (point-max)) 1) ; Multiple matches: store to buffer and continue loop
-                  (setq result-buffer (concat result-buffer (buffer-string))))
-    ))))))
-  )
-  (if (not (equal (length result-buffer) 0))
-      (git-proj-show-search-result-with-prefix
-       "Multiple matching files (use git-proj-goto-file to goto file): "
-       (concat git-proj-search-prefix "/")
-       (split-string result-buffer "\n" t)) ; Split to lines
-  )
-)
+                    (with-temp-buffer
+                      (call-process "git" nil t t "ls-files" (concat "*" other-filename))
+                      (cond
+                       ((not (equal (string-prefix-p "fatal" (buffer-string)) nil))
+                        (throw 'git-proj-exit-loop  "Not repository")
+                        )
+                       ((and (equal (length result-buffer) 0)
+                             (equal (count-lines (point-min) (point-max)) 1)) ; Perfect match: open and exit loop
+                        (git-proj-open-file-with-optional-line-number
+                         (concat search-root (replace-regexp-in-string "\n$" "" (buffer-string))))
+                        (throw 'git-proj-exit-loop t)
+                        )
+                       ((> (count-lines (point-min) (point-max)) 1) ; Multiple matches: store to buffer and continue loop
+                        (setq result-buffer (concat result-buffer (buffer-string)))
+                        )
+      )))))))
+
+        (if (not (equal (length result-buffer) 0))
+            (git-proj-show-search-result-with-prefix
+             "Multiple matching files (use git-proj-goto-file to goto file): "
+             (concat git-proj-search-prefix "/")
+             (split-string result-buffer "\n" t)) ; Split to lines
+        ))
+))
 
 (defun git-proj-goto-other ()
   "Tries to open matching file"
   (interactive)
-  (setq filename
-        (car (last (split-string (buffer-file-name) "/"))))
-  (if (not (equal filename nil))
-      (git-proj-goto-other-impl git-proj-root git-proj-goto-other-rules filename)
+  (if (not (equal (buffer-file-name) nil))
+      (let ((
+             filename (car (last (split-string (buffer-file-name) "/")))
+            ))
+        (git-proj-goto-other-impl git-proj-root git-proj-goto-other-rules filename)
+        )
     (message "git-proj-goto-other: empty filename"))
 )
 
