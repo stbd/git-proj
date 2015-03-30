@@ -146,7 +146,7 @@
 
 (defun git-proj-goto-other-impl (search-root match-rules filename)
   (setq split-name (split-string filename "\\."))
-  (if (> (equal (length split-name) 1))
+  (if (> (length split-name) 1)
 
       (let (
             (type (car (last split-name)))
