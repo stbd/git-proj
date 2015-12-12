@@ -107,14 +107,14 @@
   "Tries to open file referenced by string under cursor"
   (interactive)
   (let ((filename (git-proj-get-filename-under-cursor)))
-    (if (not (equal filename nil))       ; If cursor points to something
+    (if (not (equal filename nil))                                 ; If cursor points to something
         (cond
-         ((string-prefix-p "/" filename) ; If it is absolute path, just open it
+         ((string-prefix-p "/" filename)                           ; If it is absolute path, just open it
           (git-proj-open-file-with-optional-line-number filename))
-         ((string-prefix-p git-proj-search-prefix filename)
+         ((string-prefix-p git-proj-search-prefix filename)        ; If name begins withserach prefix, remove it and replace by project root
           (git-proj-open-file-with-optional-line-number
-           (replace-regexp-in-string  git-proj-search-prefix git-proj-root filename)))
-         (t                              ; Else, search for it
+           (concat git-proj-root (substring filename 1))))
+         (t                                                        ; Else, search for it
           (git-proj-goto-file-impl git-proj-root filename)
           )
          )
@@ -207,7 +207,7 @@
 
 (defun git-proj-find-project-root ()
   (setq root-path default-directory)
-  (if (string-prefix-p "~/" root-path)
+  (if (string-prefix-p "~/" root-path)  ; If path has "~" symbol in it, replace it absolute path to home
       (setq root-path
             (replace-regexp-in-string "~/"
                                       (concat
