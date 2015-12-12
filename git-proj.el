@@ -66,11 +66,15 @@
     (forward-line 1)
 ))
 
-(defun git-proj-get-filename ()
-  (let ((filename (replace-regexp-in-string "\'" "" ; Cleanup filename
-          (replace-regexp-in-string "\"" ""
+(defun git-proj-get-filename-under-cursor ()
+  (let ((filename (replace-regexp-in-string "\'" "" ; Sometimes thing-at-point gives quotation marks
+          (replace-regexp-in-string "\"" ""         ; and other things with the string, thus cleanup first
           (thing-at-point 'filename))))
-          )
+        )
+
+    (if (string-equal major-mode "python-mode")     ; If python mode is active, add ".py" to the end of the filename
+        (setq filename (concat filename ".py"))
+      )
     filename
 ))
 
@@ -102,7 +106,7 @@
 (defun git-proj-goto-file ()
   "Tries to open file referenced by string under cursor"
   (interactive)
-  (let ((filename (git-proj-get-filename)))
+  (let ((filename (git-proj-get-filename-under-cursor)))
     (if (not (equal filename nil))       ; If cursor points to something
         (cond
          ((string-prefix-p "/" filename) ; If it is absolute path, just open it
